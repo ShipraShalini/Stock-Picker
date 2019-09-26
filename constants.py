@@ -1,6 +1,9 @@
 FORMATS_DATE_ARROW = [
-    'D-M-YY', 'D/M/YY', 'D.M.YY',
-    'D-MMM-YY', 'D/MMM/YY', 'D.MMM.YY',
-    'YY-M-D', 'YY/M/D', 'YY.M.D',
-    'YY-MMM-D', 'YY/MMM/D', 'YY.MMM.D'
+    'DD-MMM-YYYY', 'DD/MMM/YYYY',
+    'D-MMM-YYYY', 'D/MMM/YYYY',
+    'YYYY-MMM-DD', 'YYYY/MMM/DD',
+    'YYYY-MMM-D', 'YYYY/MMM/D',
+    'D-MMM-YY', 'D/MMM/YY',
+    'D-M-YY', 'D/M/YY',
+    'YY-M-D', 'YY/M/D'
 ]

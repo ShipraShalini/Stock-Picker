@@ -1,6 +1,8 @@
 import difflib
+import sys
 
 import arrow
+from arrow.parser import ParserError
 
 from constants import FORMATS_DATE_ARROW
 
@@ -20,15 +22,22 @@ class UserInput:
                          'to process any other stock? (Y or N):\t')
     MESSAGE_TRY_AGAIN = 'Would you like to try again? (Y or N):\t'
 
-    MESSAGE_ENTER_STOCK_NUMBER =  'Please enter the stock number:\t'
-    MESSAGE_ENTER_VALID_OPTION = 'Please enter a valid option.'
-
+    MESSAGE_ENTER_STOCK_NUMBER = 'Please enter the stock number:\t'
+    MESSAGE_ENTER_VALID_OPTION = 'Please enter a valid option:\t'
+    MESSAGE_ENTER_VALID_DATE = 'Please enter a valid date:\t'
 
     def __init__(self, stock_names):
         self.stock_names = stock_names
 
-    def abort(self):
-        pass
+    def __call__(self):
+        name = self.get_stock_name()
+        start_date, end_date = self.get_dates()
+
+        return {
+            'name': name,
+            'start_date': start_date,
+            'end_date': end_date
+        }
 
     def get_stock_name(self):
         name = input(self.MESSAGE_STOCK_NAME).upper()
@@ -60,9 +69,25 @@ class UserInput:
             self.abort()
         return close_matches[stock_number - 1]
 
+    def get_dates(self):
+        start_date = self._get_date(self.MESSAGE_START_DATE)
+        end_date = self._get_date(self.MESSAGE_END_DATE)
+
+        if start_date > end_date:
+            return end_date, start_date
+        return start_date, end_date
+
     def _get_date(self, message):
-        date_str = input(message)
-        return arrow.get(date_str, FORMATS_DATE_ARROW)
+        while True:
+            date_str = input(message)
+            try:
+                return arrow.get(date_str, FORMATS_DATE_ARROW)
+            except (ParserError, ValueError):
+                message = self.MESSAGE_ENTER_VALID_DATE
+
+    @staticmethod
+    def abort():
+        sys.exit(1)
 
     def _get_boolean_answer(self, message):
         choice = input(message).lower()

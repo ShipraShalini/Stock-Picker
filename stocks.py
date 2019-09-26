@@ -6,45 +6,55 @@ import arrow
 class Stock:
     DEFAULT_STOCK_UNITS = 100
 
-    def __init__(self, name, start_date, end_date):
-        self.records = self._get_records(name, start_date, end_date)
+    def __init__(self, stock_records, start_date, end_date):
+        self.interval_records = self._get_records(stock_records,
+                                                  start_date, end_date)
 
-    def get_stats(self, records):
-        data = records.values()
+    def get_stats(self):
+        data = self.interval_records.values()
         return {
-            'std': statistics.stdev(data),
-            'mean': statistics.mean(data)
+            'std': round(statistics.stdev(data), 3),
+            'mean': round(statistics.mean(data), 3)
         }
 
-    def get_transaction_data(self, records):
-        date_sell = max(records.keys(), key=(lambda k: records[k]))
-        date_buy = min(records.keys(), key=(lambda k: records[k]))
+    def get_transaction_data(self):
 
-        price_sell = records[date_sell]
-        price_buy = records[date_buy]
+        date_sell = max(self.interval_records.keys(), key=(lambda k: self.interval_records[k]))
+        date_buy = min(self.interval_records.keys(), key=(lambda k: self.interval_records[k]))
 
-        profit = (price_sell - price_buy) * 100
+        price_sell = self.interval_records[date_sell]
+        price_buy = self.interval_records[date_buy]
+
+        profit = (price_sell - price_buy) * self.DEFAULT_STOCK_UNITS
         return {
             'sell_date': date_sell.format('DD-MMM-YYYY'),
             'buy_date': date_buy.format('DD-MMM-YYYY'),
             'profit': 'Rs. {}'.format(str(profit)),
         }
 
-    def print_all_data(self, records):
+    def print_all_data(self):
         data = {
-            **self.get_stats(records),
-            **self.get_transaction_data(records)
+            **self.get_stats(),
+            **self.get_transaction_data()
         }
 
         for key, value in data.items():
             print('{}: {}'.format(key, value))
 
-    def _get_initial_price(self, stock_records, start_date):
-        while True:
-            rec = stock_records[start_date]
-            if rec:
-                return rec
+    def _get_start_date_price(self, stock_records, start_date):
+        min_date = min(stock_records.keys())
+        while min_date <= start_date:
+            price = stock_records.get(start_date)
+            if price:
+                return price
             start_date = start_date.shift(days=-1)
+
+        max_date = min(stock_records.keys())
+        while max_date > start_date:
+            price = stock_records.get(start_date)
+            if price:
+                return price
+            start_date = start_date.shift(days=1)
 
     def _get_records(self, stock_records, start_date, end_date):
         records = {}
@@ -52,14 +62,14 @@ class Stock:
         curr_date = arrow.get(start_date)
         end_date = arrow.get(end_date)
 
-        current_price = self._get_initial_price(stock_records, start_date)
+        current_price = self._get_start_date_price(stock_records, start_date)
 
         while curr_date < end_date:
-            price = records.get(curr_date)
-            if not price:
-                price = current_price
-            else:
+            price = stock_records.get(curr_date)
+            if price:
                 current_price = price
+            else:
+                price = current_price
 
             records[curr_date] = price
             curr_date = curr_date.shift(days=1)

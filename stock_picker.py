@@ -5,8 +5,11 @@ from decimal import Decimal
 import arrow
 
 from constants import FORMATS_DATE_ARROW
+from stocks import Stock
+from userinput import UserInput
 
 csv_file_name = 'stocks.csv'
+
 
 def read_csv():
     data = defaultdict(dict)
@@ -21,5 +24,12 @@ def read_csv():
             })
     return data
 
-def __main__():
-    stock_data = read_csv()
+
+if __name__ == "__main__":
+    all_stock_data = read_csv()
+    user_input = UserInput(list(all_stock_data.keys()))()
+    stock_records = all_stock_data[user_input['name']]
+    stock = Stock(stock_records,
+                  user_input['start_date'],
+                  user_input['end_date'])
+    stock.print_all_data()
