@@ -18,8 +18,11 @@ class UserInput:
     MESSAGE_START_DATE = 'From which date you want to start:\t'
     MESSAGE_END_DATE = 'Till which date you want to analyze:\t'
     MESSAGE_SUGGESTION = 'Sorry! Did you mean any of the following?'
-    MESSAGE_NOT_FOUND = ('Sorry! Data for {} is not present. Would you like '
-                         'to process any other stock? (Y or N):\t')
+    MESSAGE_NOT_FOUND = (
+        'Sorry! Data for stock "{}" is not present.\n'
+        'Would you like to process any other stock? '
+        '(Y or N):\t'
+    )
     MESSAGE_TRY_AGAIN = 'Would you like to try again? (Y or N):\t'
 
     MESSAGE_ENTER_STOCK_NUMBER = 'Please enter the stock number:\t'
@@ -32,7 +35,6 @@ class UserInput:
     def __call__(self):
         name = self.get_stock_name()
         start_date, end_date = self.get_dates()
-
         return {
             'name': name,
             'start_date': start_date,
@@ -46,9 +48,7 @@ class UserInput:
         close_matches = difflib.get_close_matches(name, self.stock_names,
                                                   self.NO_OF_MATCHES)
         if not close_matches:
-            if self._get_boolean_answer(self.MESSAGE_NOT_FOUND):
-                self.get_stock_name()
-            self.abort()
+            self._repeat_or_abort(self.MESSAGE_NOT_FOUND.format(name))
 
         print(self.MESSAGE_SUGGESTION)
         print('0: {}'.format(self.OPTION_NONE))
@@ -59,15 +59,11 @@ class UserInput:
         while True:
             try:
                 stock_number = int(input(message))
-                break
-            except ValueError:
+                if stock_number == 0:
+                    self._repeat_or_abort(self.MESSAGE_TRY_AGAIN)
+                return close_matches[stock_number - 1]
+            except (ValueError, IndexError):
                 message = self.MESSAGE_ENTER_VALID_OPTION
-
-        if stock_number == 0:
-            if self._get_boolean_answer(self.MESSAGE_TRY_AGAIN):
-                self.get_stock_name()
-            self.abort()
-        return close_matches[stock_number - 1]
 
     def get_dates(self):
         start_date = self._get_date(self.MESSAGE_START_DATE)
@@ -85,8 +81,13 @@ class UserInput:
             except (ParserError, ValueError):
                 message = self.MESSAGE_ENTER_VALID_DATE
 
+    def _repeat_or_abort(self, message):
+        if not self._get_boolean_answer(message):
+            self._abort()
+        self.get_stock_name()
+
     @staticmethod
-    def abort():
+    def _abort():
         sys.exit(1)
 
     def _get_boolean_answer(self, message):

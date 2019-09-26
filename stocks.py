@@ -5,6 +5,7 @@ import arrow
 
 class Stock:
     DEFAULT_STOCK_UNITS = 100
+    MESSAGE_RESULT = '\nHere is the info that you requested:\n'
 
     def __init__(self, stock_records, start_date, end_date):
         self.interval_records = self._get_records(stock_records,
@@ -37,24 +38,26 @@ class Stock:
             **self.get_stats(),
             **self.get_transaction_data()
         }
-
+        print(self.MESSAGE_RESULT)
         for key, value in data.items():
-            print('{}: {}'.format(key, value))
+            print('{}: {}'.format(self._snake_to_title(key), value))
 
     def _get_start_date_price(self, stock_records, start_date):
+        curr_date = start_date
         min_date = min(stock_records.keys())
-        while min_date <= start_date:
-            price = stock_records.get(start_date)
+        while min_date <= curr_date:
+            price = stock_records.get(curr_date)
             if price:
                 return price
-            start_date = start_date.shift(days=-1)
+            curr_date = curr_date.shift(days=-1)
 
-        max_date = min(stock_records.keys())
-        while max_date > start_date:
-            price = stock_records.get(start_date)
+        curr_date = start_date
+        max_date = max(stock_records.keys())
+        while max_date > curr_date:
+            price = stock_records.get(curr_date)
             if price:
                 return price
-            start_date = start_date.shift(days=1)
+            curr_date = curr_date.shift(days=1)
 
     def _get_records(self, stock_records, start_date, end_date):
         records = {}
