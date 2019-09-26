@@ -1,32 +1,19 @@
-import csv
-from collections import defaultdict
-from decimal import Decimal
+import argparse
 
-import arrow
-
-from constants import FORMATS_DATE_ARROW
 from stocks import Stock
-from userinput import UserInput
-
-csv_file_name = 'stocks.csv'
+from userinput import CSVInput, UserInput
 
 
-def read_csv():
-    data = defaultdict(dict)
-    with open(csv_file_name) as f:
-        reader = csv.DictReader(f)
+parser = argparse.ArgumentParser(conflict_handler='resolve')
+parser.add_argument('csv_file', nargs='?', default=None,
+                    help="CSV file path")
+args = parser.parse_args()
 
-        for row in reader:
-            stock_date = arrow.get(row['StockDate'], FORMATS_DATE_ARROW)
-
-            data[row['StockName'].upper()].update({
-                stock_date: Decimal(row['StockPrice'])
-            })
-    return data
+csv_file = args.csv_file
 
 
 if __name__ == "__main__":
-    all_stock_data = read_csv()
+    all_stock_data = CSVInput().read(csv_file)
     user_input = UserInput(list(all_stock_data.keys()))()
     stock_records = all_stock_data[user_input['name']]
     stock = Stock(stock_records,

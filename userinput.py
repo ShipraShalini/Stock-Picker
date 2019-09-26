@@ -1,5 +1,9 @@
+import csv
 import difflib
+import os
 import sys
+from collections import defaultdict
+from decimal import Decimal
 
 import arrow
 from arrow.parser import ParserError
@@ -93,3 +97,46 @@ class UserInput:
     def _get_boolean_answer(self, message):
         choice = input(message).lower()
         return self.BOOL_DICT.get(choice, False)
+
+
+class CSVInput:
+    MESSAGE_INPUT_FILE_PATH = (
+        'Please input a valid file path or press ENTER to abort: \t'
+    )
+    MESSAGE_NOT_FOUND = 'The file "{}" does not exists. '
+    MESSAGE_NO_DATA = 'The file "{}" is empty or not a valid csv file. '
+
+    def read(self, csv_file_path):
+        csv_file_path = self.get_csv_file(csv_file_path)
+
+        data = defaultdict(dict)
+        with open(csv_file_path) as f:
+            reader = csv.DictReader(f)
+
+            for row in reader:
+                stock_date = arrow.get(row['StockDate'], FORMATS_DATE_ARROW)
+
+                data[row['StockName'].upper()].update({
+                    stock_date: Decimal(row['StockPrice'])
+                })
+        if not data:
+            print(self.MESSAGE_NO_DATA.format(csv_file_path))
+            self.read(csv_file_path=None)
+        return data
+
+    def get_csv_file(self, csv_file):
+        if not csv_file:
+            csv_file = input(self.MESSAGE_INPUT_FILE_PATH)
+
+        while True:
+            if not csv_file:
+                self._abort()
+            if os.path.isfile(csv_file):
+                return csv_file
+            csv_file = input(
+                self.MESSAGE_NOT_FOUND.format(csv_file) + self.MESSAGE_INPUT_FILE_PATH
+            )
+
+    @staticmethod
+    def _abort():
+        sys.exit(1)
